@@ -1,0 +1,233 @@
+{
+  "levels": [
+    {
+      "id": 1,
+      "title": "Meadow Dawn",
+      "letters": ["C", "A", "T"],
+      "grid": {
+        "rows": 3,
+        "cols": 3,
+        "words": [
+          { "word": "CAT", "startRow": 0, "startCol": 0, "isHorizontal": true },
+          { "word": "ACT", "startRow": 0, "startCol": 1, "isHorizontal": false }
+        ]
+      },
+      "bonusWords": ["AT"]
+    },
+    {
+      "id": 2,
+      "title": "Sunlit Glade",
+      "letters": ["D", "O", "G"],
+      "grid": {
+        "rows": 3,
+        "cols": 3,
+        "words": [
+          { "word": "DOG", "startRow": 0, "startCol": 0, "isHorizontal": true },
+          { "word": "GOD", "startRow": 0, "startCol": 2, "isHorizontal": false }
+        ]
+      },
+      "bonusWords": ["GO", "DO"]
+    },
+    {
+      "id": 3,
+      "title": "River Stream",
+      "letters": ["P", "A", "N"],
+      "grid": {
+        "rows": 3,
+        "cols": 3,
+        "words": [
+          { "word": "PAN", "startRow": 0, "startCol": 0, "isHorizontal": true },
+          { "word": "NAP", "startRow": 0, "startCol": 2, "isHorizontal": false }
+        ]
+      },
+      "bonusWords": ["AN"]
+    },
+    {
+      "id": 4,
+      "title": "Green Valley",
+      "letters": ["P", "O", "S", "T"],
+      "grid": {
+        "rows": 4,
+        "cols": 6,
+        "words": [
+          { "word": "POST", "startRow": 0, "startCol": 0, "isHorizontal": true },
+          { "word": "STOP", "startRow": 0, "startCol": 2, "isHorizontal": false },
+          { "word": "TOP", "startRow": 1, "startCol": 2, "isHorizontal": true }
+        ]
+      },
+      "bonusWords": ["SPOT", "POTS", "TOPS", "SOP", "OPT", "OPTS", "SO"]
+    },
+    {
+      "id": 5,
+      "title": "Whispering Pines",
+      "letters": ["S", "T", "A", "R"],
+      "grid": {
+        "rows": 3,
+        "cols": 5,
+        "words": [
+          { "word": "STAR", "startRow": 0, "startCol": 0, "isHorizontal": true },
+          { "word": "ART", "startRow": 0, "startCol": 2, "isHorizontal": false },
+          { "word": "RAT", "startRow": 1, "startCol": 2, "isHorizontal": true }
+        ]
+      },
+      "bonusWords": ["TAR", "RATS", "TARS", "ARTS", "SAT", "AS", "AT"]
+    },
+    {
+      "id": 6,
+      "title": "Misty Falls",
+      "letters": ["B", "E", "A", "R"],
+      "grid": {
+        "rows": 4,
+        "cols": 4,
+        "words": [
+          { "word": "BARE", "startRow": 0, "startCol": 0, "isHorizontal": true },
+          { "word": "BAR", "startRow": 0, "startCol": 0, "isHorizontal": false },
+          { "word": "ARE", "startRow": 0, "startCol": 1, "isHorizontal": false },
+          { "word": "EAR", "startRow": 2, "startCol": 1, "isHorizontal": true }
+        ]
+      },
+      "bonusWords": ["BEAR", "ERA"]
+    },
+    {
+      "id": 7,
+      "title": "Golden Sand",
+      "letters": ["L", "I", "O", "N"],
+      "grid": {
+        "rows": 3,
+        "cols": 4,
+        "words": [
+          { "word": "LION", "startRow": 0, "startCol": 0, "isHorizontal": true },
+          { "word": "ION", "startRow": 0, "startCol": 1, "isHorizontal": false },
+          { "word": "OIL", "startRow": 1, "startCol": 1, "isHorizontal": true }
+        ]
+      },
+      "bonusWords": ["LOIN", "NO", "ON", "IN"]
+    },
+    {
+      "id": 8,
+      "title": "Autumn Breeze",
+      "letters": ["L", "E", "A", "F"],
+      "grid": {
+        "rows": 4,
+        "cols": 4,
+        "words": [
+          { "word": "LEAF", "startRow": 0, "startCol": 0, "isHorizontal": true },
+          { "word": "ALE", "startRow": 0, "startCol": 2, "isHorizontal": false },
+          { "word": "FLEA", "startRow": 0, "startCol": 3, "isHorizontal": false }
+        ]
+      },
+      "bonusWords": ["ELF"]
+    },
+    {
+      "id": 9,
+      "title": "Breezy Cove",
+      "letters": ["C", "A", "M", "P"],
+      "grid": {
+        "rows": 3,
+        "cols": 4,
+        "words": [
+          { "word": "CAMP", "startRow": 0, "startCol": 0, "isHorizontal": true },
+          { "word": "CAP", "startRow": 0, "startCol": 0, "isHorizontal": false },
+          { "word": "MAP", "startRow": 0, "startCol": 2, "isHorizontal": false }
+        ]
+      },
+      "bonusWords": ["AMP"]
+    },
+    {
+      "id": 10,
+      "title": "Emerald Forest",
+      "letters": ["T", "R", "A", "I", "N"],
+      "grid": {
+        "rows": 4,
+        "cols": 5,
+        "words": [
+          { "word": "TRAIN", "startRow": 0, "startCol": 0, "isHorizontal": true },
+          { "word": "RAIN", "startRow": 0, "startCol": 1, "isHorizontal": false },
+          { "word": "ANT", "startRow": 1, "startCol": 1, "isHorizontal": true },
+          { "word": "TIN", "startRow": 1, "startCol": 3, "isHorizontal": false }
+        ]
+      },
+      "bonusWords": ["RAN", "RAT", "ART", "TAN", "TAR", "AIR"]
+    },
+    {
+      "id": 11,
+      "title": "Ocean Sunset",
+      "letters": ["S", "M", "I", "L", "E"],
+      "grid": {
+        "rows": 4,
+        "cols": 5,
+        "words": [
+          { "word": "SMILE", "startRow": 0, "startCol": 0, "isHorizontal": true },
+          { "word": "SLIM", "startRow": 0, "startCol": 0, "isHorizontal": false },
+          { "word": "MILE", "startRow": 0, "startCol": 1, "isHorizontal": false },
+          { "word": "LIME", "startRow": 2, "startCol": 1, "isHorizontal": true }
+        ]
+      },
+      "bonusWords": ["LIE", "LIES", "ELM"]
+    },
+    {
+      "id": 12,
+      "title": "Lavender Fields",
+      "letters": ["P", "L", "A", "N", "T"],
+      "grid": {
+        "rows": 3,
+        "cols": 5,
+        "words": [
+          { "word": "PLANT", "startRow": 0, "startCol": 0, "isHorizontal": true },
+          { "word": "ANT", "startRow": 0, "startCol": 2, "isHorizontal": false },
+          { "word": "TAP", "startRow": 2, "startCol": 2, "isHorizontal": true }
+        ]
+      },
+      "bonusWords": ["PLAN", "PAN", "TAN", "PAT", "NAP", "LAP"]
+    },
+    {
+      "id": 13,
+      "title": "Crystal Cave",
+      "letters": ["S", "T", "O", "N", "E"],
+      "grid": {
+        "rows": 3,
+        "cols": 5,
+        "words": [
+          { "word": "STONE", "startRow": 0, "startCol": 0, "isHorizontal": true },
+          { "word": "TEN", "startRow": 0, "startCol": 1, "isHorizontal": false },
+          { "word": "ONE", "startRow": 0, "startCol": 2, "isHorizontal": false },
+          { "word": "NET", "startRow": 1, "startCol": 2, "isHorizontal": true }
+        ]
+      },
+      "bonusWords": ["NOSE", "TONE", "TONES", "NOTE", "NOTES", "SET", "SON", "TOE", "NOT"]
+    },
+    {
+      "id": 14,
+      "title": "Starlit Sky",
+      "letters": ["C", "L", "O", "U", "D"],
+      "grid": {
+        "rows": 4,
+        "cols": 5,
+        "words": [
+          { "word": "CLOUD", "startRow": 0, "startCol": 0, "isHorizontal": true },
+          { "word": "COLD", "startRow": 0, "startCol": 0, "isHorizontal": false },
+          { "word": "LOUD", "startRow": 0, "startCol": 1, "isHorizontal": false },
+          { "word": "OLD", "startRow": 1, "startCol": 0, "isHorizontal": true }
+        ]
+      },
+      "bonusWords": ["DUO", "COD"]
+    },
+    {
+      "id": 15,
+      "title": "Zen Garden",
+      "letters": ["H", "E", "A", "R", "T"],
+      "grid": {
+        "rows": 3,
+        "cols": 5,
+        "words": [
+          { "word": "HEART", "startRow": 0, "startCol": 0, "isHorizontal": true },
+          { "word": "HAT", "startRow": 0, "startCol": 0, "isHorizontal": false },
+          { "word": "EAR", "startRow": 0, "startCol": 1, "isHorizontal": false },
+          { "word": "ART", "startRow": 0, "startCol": 2, "isHorizontal": false },
+          { "word": "RAT", "startRow": 1, "startCol": 2, "isHorizontal": true }
+        ]
+      },
+      "bonusWords": ["EARTH", "HEAT", "HEAR", "HATE", "TEAR", "TEA", "EAT", "ATE", "ARE"]
+    }
+  ]
+}

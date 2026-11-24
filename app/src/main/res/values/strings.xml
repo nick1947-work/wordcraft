@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">WordCraft</string>
+    <string name="play">Play</string>
+    <string name="select_level">Select Level</string>
+    <string name="level_title">Level %d</string>
+    <string name="paused">Game Paused</string>
+    <string name="resume">Resume</string>
+    <string name="restart">Restart</string>
+    <string name="menu">Main Menu</string>
+    <string name="next_level">Next Level</string>
+    <string name="level_complete">Level Completed!</string>
+    <string name="bonus_words">Bonus Words</string>
+    <string name="hint">Hint</string>
+    <string name="shuffle">Shuffle</string>
+</resources>
