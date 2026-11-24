@@ -57,7 +57,7 @@ fun LetterWheel(
     onLetterTouchMove: (pos: Offset, hoveredIndex: Int?) -> Unit,
     onLetterTouchUp: () -> Unit,
     modifier: Modifier = Modifier,
-    wheelSize: Dp = 270.dp
+    wheelSize: Dp = 230.dp
 ) {
     val density = LocalDensity.current
     val wheelSizePx = with(density) { wheelSize.toPx() }

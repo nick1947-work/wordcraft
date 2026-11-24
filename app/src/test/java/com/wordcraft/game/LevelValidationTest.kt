@@ -95,4 +95,28 @@ class LevelValidationTest {
         assertTrue(bonusWords.contains("SO"))
         assertFalse(bonusWords.contains("RANDOM"))
     }
+
+    @Test
+    fun testHintAutoCompletesWordWhenAllCellsRevealed() {
+        val cat = GridWord("CAT", 0, 0, true)
+        val act = GridWord("ACT", 0, 1, false)
+        val words = listOf(cat, act)
+
+        // Suppose CAT is solved, so (0,0), (0,1), (0,2) are revealed
+        val revealedCells = mutableSetOf(Pair(0, 0), Pair(0, 1), Pair(0, 2))
+
+        // In ACT: (0,1) is already revealed by CAT. Unrevealed cells of ACT are (1,1) and (2,1)
+        val unrevealedInAct = act.cells().filterNot { revealedCells.contains(it) }
+        assertEquals(2, unrevealedInAct.size)
+        assertTrue(unrevealedInAct.contains(Pair(1, 1)))
+        assertTrue(unrevealedInAct.contains(Pair(2, 1)))
+
+        // When hints reveal (1,1) and (2,1)
+        revealedCells.add(Pair(1, 1))
+        revealedCells.add(Pair(2, 1))
+
+        // Check that all words are now fully revealed
+        val completedWords = words.filter { w -> w.cells().all { revealedCells.contains(it) } }
+        assertEquals(2, completedWords.size)
+    }
 }

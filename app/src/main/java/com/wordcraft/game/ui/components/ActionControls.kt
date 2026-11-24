@@ -3,13 +3,14 @@ package com.wordcraft.game.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lightbulb
@@ -35,7 +36,7 @@ fun ShuffleButton(
 ) {
     Box(
         modifier = modifier
-            .size(54.dp)
+            .size(52.dp)
             .shadow(4.dp, CircleShape)
             .clip(CircleShape)
             .background(Color(0xFF1B263B))
@@ -47,7 +48,7 @@ fun ShuffleButton(
             imageVector = Icons.Default.Shuffle,
             contentDescription = "Shuffle Letters",
             tint = Color.White,
-            modifier = Modifier.size(26.dp)
+            modifier = Modifier.size(24.dp)
         )
     }
 }
@@ -61,7 +62,7 @@ fun HintButton(
 ) {
     Box(
         modifier = modifier
-            .size(58.dp)
+            .size(52.dp)
             .shadow(4.dp, CircleShape)
             .clip(CircleShape)
             .background(if (canAfford) Color(0xFF1B263B) else Color(0xFF263238))
@@ -70,24 +71,29 @@ fun HintButton(
         contentAlignment = Alignment.Center
     ) {
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
             Icon(
                 imageVector = Icons.Default.Lightbulb,
                 contentDescription = "Reveal Hint",
                 tint = if (canAfford) BrightGold else Color.Gray,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(22.dp)
             )
-            Spacer(modifier = Modifier.height(2.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Spacer(modifier = Modifier.height(1.dp))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
                 Text(
                     text = "🪙",
-                    fontSize = 9.sp
+                    fontSize = 10.sp
                 )
+                Spacer(modifier = Modifier.width(2.dp))
                 Text(
                     text = cost.toString(),
                     color = if (canAfford) Color.White else Color.Gray,
-                    fontSize = 10.sp,
+                    fontSize = 11.sp,
                     fontWeight = FontWeight.Bold
                 )
             }

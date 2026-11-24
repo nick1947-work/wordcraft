@@ -5,6 +5,7 @@ import android.media.AudioFormat
 import android.media.AudioTrack
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.sin
@@ -91,7 +92,7 @@ class SoundEffects {
         }
     }
 
-    private fun playTone(freq: Double, durationMs: Int, attackMs: Int, decayMs: Int) {
+    private suspend fun playTone(freq: Double, durationMs: Int, attackMs: Int, decayMs: Int) {
         try {
             val numSamples = (durationMs * sampleRate) / 1000
             val attackSamples = (attackMs * sampleRate) / 1000
@@ -127,8 +128,8 @@ class SoundEffects {
             audioTrack.write(buffer, 0, buffer.size)
             audioTrack.play()
 
-            // Release after playing
-            Thread.sleep(durationMs.toLong() + 20)
+            // Non-blocking release after tone duration
+            delay(durationMs.toLong() + 20)
             audioTrack.stop()
             audioTrack.release()
         } catch (_: Exception) {

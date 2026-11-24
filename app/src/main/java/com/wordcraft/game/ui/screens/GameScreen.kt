@@ -95,18 +95,12 @@ fun GameScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             // Bottom Controls Area: Shuffle Button, Letter Wheel, Hint Button
-            Row(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(horizontal = 16.dp),
+                contentAlignment = Alignment.Center
             ) {
-                // Shuffle Button (Left)
-                ShuffleButton(
-                    onClick = { viewModel.shuffleWheel() }
-                )
-
                 // Circular Letter Wheel (Center)
                 LetterWheel(
                     letters = state.wheelLetters,
@@ -115,14 +109,22 @@ fun GameScreen(
                     shuffleAnimKey = state.shuffleAnimKey,
                     onLetterTouchDown = { idx, pos -> viewModel.onTouchDown(idx, pos) },
                     onLetterTouchMove = { pos, hovered -> viewModel.onTouchMove(pos, hovered) },
-                    onLetterTouchUp = { viewModel.onTouchUp() }
+                    onLetterTouchUp = { viewModel.onTouchUp() },
+                    wheelSize = 230.dp
+                )
+
+                // Shuffle Button (Left)
+                ShuffleButton(
+                    onClick = { viewModel.shuffleWheel() },
+                    modifier = Modifier.align(Alignment.CenterStart)
                 )
 
                 // Hint Button (Right)
                 HintButton(
                     cost = 25,
                     canAfford = state.coins >= 25,
-                    onClick = { viewModel.useHint() }
+                    onClick = { viewModel.useHint() },
+                    modifier = Modifier.align(Alignment.CenterEnd)
                 )
             }
         }

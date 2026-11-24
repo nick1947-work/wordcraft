@@ -127,54 +127,29 @@ class MainActivity : ComponentActivity() {
 
     private fun triggerHaptic(context: Context, effect: GameUiEffect) {
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                val vibratorManager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager
-                val vibrator = vibratorManager?.defaultVibrator
-                when (effect) {
-                    GameUiEffect.VibrateLight -> {
-                        vibrator?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK))
-                    }
-                    GameUiEffect.VibrateMedium -> {
-                        vibrator?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK))
-                    }
-                    GameUiEffect.VibrateError -> {
-                        vibrator?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK))
-                    }
-                }
+            val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                (context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager)?.defaultVibrator
             } else {
                 @Suppress("DEPRECATION")
-                val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
-                when (effect) {
-                    GameUiEffect.VibrateLight -> {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            vibrator?.vibrate(VibrationEffect.createOneShot(20, VibrationEffect.DEFAULT_AMPLITUDE))
-                        } else {
-                            @Suppress("DEPRECATION")
-                            vibrator?.vibrate(20)
-                        }
-                    }
-                    GameUiEffect.VibrateMedium -> {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            vibrator?.vibrate(VibrationEffect.createOneShot(45, VibrationEffect.DEFAULT_AMPLITUDE))
-                        } else {
-                            @Suppress("DEPRECATION")
-                            vibrator?.vibrate(45)
-                        }
-                    }
-                    GameUiEffect.VibrateError -> {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            vibrator?.vibrate(
-                                VibrationEffect.createWaveform(longArrayOf(0, 30, 40, 30), -1)
-                            )
-                        } else {
-                            @Suppress("DEPRECATION")
-                            vibrator?.vibrate(longArrayOf(0, 30, 40, 30), -1)
-                        }
-                    }
+                context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+            } ?: return
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val predef = when (effect) {
+                    GameUiEffect.VibrateLight -> VibrationEffect.EFFECT_CLICK
+                    GameUiEffect.VibrateMedium -> VibrationEffect.EFFECT_HEAVY_CLICK
+                    GameUiEffect.VibrateError -> VibrationEffect.EFFECT_DOUBLE_CLICK
                 }
+                vibrator.vibrate(VibrationEffect.createPredefined(predef))
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val duration = if (effect == GameUiEffect.VibrateError) 80L else 30L
+                vibrator.vibrate(VibrationEffect.createOneShot(duration, VibrationEffect.DEFAULT_AMPLITUDE))
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator.vibrate(30L)
             }
         } catch (_: Exception) {
-            // Ignore haptic failures on unsupported devices
+            // Ignore haptic failures
         }
     }
 }

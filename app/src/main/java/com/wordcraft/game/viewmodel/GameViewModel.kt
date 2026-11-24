@@ -425,22 +425,19 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
 
-        // Find all cells that belong to unrevealed words and aren't already hinted
+        // Determine currently unrevealed cells directly from the board matrix
+        val currentMatrix = repository.buildGridMatrix(level, state.revealedWords, state.hintedCells)
         val unrevealedCells = mutableListOf<CellPosition>()
-        for (gridWord in level.grid.words) {
-            if (!state.revealedWords.contains(gridWord.word)) {
-                for (cell in gridWord.cells()) {
-                    val pos = CellPosition(cell.first, cell.second)
-                    if (!state.hintedCells.contains(pos)) {
-                        unrevealedCells.add(pos)
-                    }
+        for (r in 0 until level.grid.rows) {
+            for (c in 0 until level.grid.cols) {
+                val cell = currentMatrix[r][c]
+                if (cell != null && !cell.isRevealed) {
+                    unrevealedCells.add(CellPosition(r, c))
                 }
             }
         }
 
-        if (unrevealedCells.isEmpty()) {
-            return
-        }
+        if (unrevealedCells.isEmpty()) return
 
         val targetCell = unrevealedCells.random()
         val newHinted = state.hintedCells + targetCell
@@ -449,12 +446,19 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
         val updatedMatrix = repository.buildGridMatrix(level, state.revealedWords, newHinted)
 
+        // Auto-complete words whose cells are now all revealed
+        val newlySolvedWords = level.grid.words.filter { gridWord ->
+            gridWord.cells().all { (r, c) -> updatedMatrix[r][c]?.isRevealed == true }
+        }.map { it.word }.toSet()
+        val allRevealedWords = state.revealedWords + newlySolvedWords
+
         sounds.playHint()
         emitHaptic(GameUiEffect.VibrateMedium)
 
         _uiState.update {
             it.copy(
                 hintedCells = newHinted,
+                revealedWords = allRevealedWords,
                 coins = updatedCoins,
                 gridMatrix = updatedMatrix,
                 feedbackType = FeedbackType.BONUS,
@@ -463,21 +467,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         }
         scheduleClearFeedback(1200)
 
-        // Check if this hint completed all unrevealed cells
-        checkIfAllCellsRevealed(level, state.revealedWords, newHinted)
-    }
-
-    private fun checkIfAllCellsRevealed(
-        level: Level,
-        revealedWords: Set<String>,
-        hintedCells: Set<CellPosition>
-    ) {
-        val allSolved = level.grid.words.all { gridWord ->
-            revealedWords.contains(gridWord.word) || gridWord.cells().all {
-                hintedCells.contains(CellPosition(it.first, it.second))
-            }
-        }
-        if (allSolved && !_uiState.value.isLevelComplete) {
+        if (allRevealedWords.size >= level.grid.words.size && !_uiState.value.isLevelComplete) {
             handleLevelComplete(level)
         }
     }

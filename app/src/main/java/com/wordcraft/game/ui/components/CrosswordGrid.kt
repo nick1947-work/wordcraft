@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -129,15 +130,20 @@ private fun GridCellItem(
         contentAlignment = Alignment.Center
     ) {
         if (cellData.isRevealed) {
-            AnimatedVisibility(
-                visible = true,
-                enter = fadeIn() + scaleIn(spring(dampingRatio = Spring.DampingRatioMediumBouncy))
-            ) {
-                Text(
-                    text = cellData.letter.toString(),
-                    color = CellRevealedText,
-                    fontSize = (size.value * 0.52f).sp,
-                    fontWeight = FontWeight.Black
+            Text(
+                text = cellData.letter.toString(),
+                color = CellRevealedText,
+                fontSize = (size.value * 0.52f).sp,
+                fontWeight = FontWeight.Black
+            )
+            if (cellData.isHinted) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(3.dp)
+                        .size(5.dp)
+                        .clip(CircleShape)
+                        .background(GoldenYellow)
                 )
             }
         }
