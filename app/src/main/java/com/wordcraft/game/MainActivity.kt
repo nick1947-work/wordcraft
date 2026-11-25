@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.wordcraft.game.domain.GameUiEffect
 import com.wordcraft.game.ui.fragment.HomeFragment
 import com.wordcraft.game.viewmodel.GameViewModel
@@ -38,6 +39,15 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    fun showExitConfirmDialog() {
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Exit WordCraft?")
+            .setMessage("Are you sure you want to exit the game?")
+            .setPositiveButton("Exit") { _, _ -> finish() }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun triggerHaptic(context: Context, effect: GameUiEffect) {

@@ -18,6 +18,7 @@ class PauseDialogFragment : DialogFragment() {
         fun onResumeClicked()
         fun onRestartClicked()
         fun onLevelSelectClicked()
+        fun onExitClicked()
         fun onToggleSound()
         fun onToggleHaptics()
     }
@@ -45,6 +46,14 @@ class PauseDialogFragment : DialogFragment() {
         return dialog
     }
 
+    override fun onStart() {
+        super.onStart()
+        dialog?.window?.setLayout(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -61,6 +70,11 @@ class PauseDialogFragment : DialogFragment() {
         binding.btnPauseLevelSelect.setOnClickListener {
             dismiss()
             listener?.onLevelSelectClicked()
+        }
+
+        binding.btnPauseExit.setOnClickListener {
+            dismiss()
+            listener?.onExitClicked()
         }
 
         updateToggles()

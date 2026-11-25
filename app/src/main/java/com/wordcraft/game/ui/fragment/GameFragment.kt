@@ -14,6 +14,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.wordcraft.game.MainActivity
 import com.wordcraft.game.R
 import com.wordcraft.game.databinding.FragmentGameBinding
 import com.wordcraft.game.domain.FeedbackType
@@ -193,6 +194,9 @@ class GameFragment : Fragment() {
                 }
                 override fun onLevelSelectClicked() {
                     navigateToLevelSelect()
+                }
+                override fun onExitClicked() {
+                    (activity as? MainActivity)?.showExitConfirmDialog()
                 }
                 override fun onToggleSound() {
                     viewModel.toggleSound()

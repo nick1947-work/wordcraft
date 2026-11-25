@@ -95,6 +95,25 @@
 
         <Space
             android:layout_width="match_parent"
+            android:layout_height="10dp" />
+
+        <!-- Exit Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnPauseExit"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:letterSpacing="0.06"
+            android:text="EXIT GAME"
+            android:textColor="@color/error_red"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:cornerRadius="16dp"
+            app:strokeColor="@color/error_red"
+            app:strokeWidth="1.5dp" />
+
+        <Space
+            android:layout_width="match_parent"
             android:layout_height="18dp" />
 
         <!-- Sound & Haptic Toggles -->
