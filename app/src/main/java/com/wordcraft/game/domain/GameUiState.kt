@@ -1,6 +1,5 @@
 package com.wordcraft.game.domain
 
-import androidx.compose.ui.geometry.Offset
 import com.wordcraft.game.data.model.CellData
 import com.wordcraft.game.data.model.CellPosition
 import com.wordcraft.game.data.model.Level
@@ -29,7 +28,6 @@ data class GameUiState(
     val wheelLetters: List<String> = emptyList(),
     val selectedIndices: List<Int> = emptyList(),
     val currentWord: String = "",
-    val touchPosition: Offset? = null,
     val feedbackType: FeedbackType = FeedbackType.NONE,
     val feedbackText: String = "",
     val coins: Int = 200,

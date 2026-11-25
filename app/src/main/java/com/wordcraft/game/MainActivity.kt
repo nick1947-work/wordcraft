@@ -3,123 +3,38 @@ package com.wordcraft.game
 import android.content.Context
 import android.os.Build
 import android.os.Bundle
-import android.os.CombinedVibration
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.BackHandler
-import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Surface
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.wordcraft.game.domain.GameUiEffect
-import com.wordcraft.game.domain.Screen
-import com.wordcraft.game.ui.screens.GameScreen
-import com.wordcraft.game.ui.screens.HomeScreen
-import com.wordcraft.game.ui.screens.LevelSelectScreen
-import com.wordcraft.game.ui.theme.DarkBackgroundStart
-import com.wordcraft.game.ui.theme.WordCraftTheme
+import com.wordcraft.game.ui.fragment.HomeFragment
 import com.wordcraft.game.viewmodel.GameViewModel
+import kotlinx.coroutines.launch
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
 
     private val viewModel: GameViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
 
-        setContent {
-            WordCraftTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = DarkBackgroundStart
-                ) {
-                    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-                    val context = LocalContext.current
+        if (savedInstanceState == null) {
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, HomeFragment())
+                .commit()
+        }
 
-                    // Handle system back navigation hygiene
-                    BackHandler {
-                        val handled = viewModel.handleBackPress()
-                        if (!handled) {
-                            finish()
-                        }
-                    }
-
-                    // Collect and execute haptic effects
-                    LaunchedEffect(Unit) {
-                        viewModel.uiEffects.collect { effect ->
-                            triggerHaptic(context, effect)
-                        }
-                    }
-
-                    // Smooth screen transitions
-                    AnimatedContent(
-                        targetState = uiState.currentScreen,
-                        transitionSpec = {
-                            when {
-                                targetState == Screen.GAMEPLAY -> {
-                                    (slideInHorizontally { width -> width } + fadeIn()).togetherWith(
-                                        slideOutHorizontally { width -> -width / 3 } + fadeOut()
-                                    )
-                                }
-                                initialState == Screen.GAMEPLAY -> {
-                                    (slideInHorizontally { width -> -width / 3 } + fadeIn()).togetherWith(
-                                        slideOutHorizontally { width -> width } + fadeOut()
-                                    )
-                                }
-                                else -> {
-                                    fadeIn().togetherWith(fadeOut())
-                                }
-                            }
-                        },
-                        label = "screenTransition"
-                    ) { screen ->
-                        when (screen) {
-                            Screen.HOME -> {
-                                HomeScreen(
-                                    currentLevel = uiState.currentLevel,
-                                    coins = uiState.coins,
-                                    onPlayClick = {
-                                        viewModel.navigateTo(Screen.GAMEPLAY)
-                                    },
-                                    onLevelSelectClick = {
-                                        viewModel.navigateTo(Screen.LEVEL_SELECT)
-                                    }
-                                )
-                            }
-                            Screen.LEVEL_SELECT -> {
-                                LevelSelectScreen(
-                                    levels = uiState.allLevels,
-                                    highestUnlockedLevel = uiState.highestUnlockedLevel,
-                                    onLevelSelected = { levelId ->
-                                        viewModel.selectLevel(levelId)
-                                    },
-                                    onBackClick = {
-                                        viewModel.navigateTo(Screen.HOME)
-                                    }
-                                )
-                            }
-                            Screen.GAMEPLAY -> {
-                                GameScreen(
-                                    state = uiState,
-                                    viewModel = viewModel
-                                )
-                            }
-                        }
-                    }
+        // Collect haptic feedback
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiEffects.collect { effect ->
+                    triggerHaptic(this@MainActivity, effect)
                 }
             }
         }

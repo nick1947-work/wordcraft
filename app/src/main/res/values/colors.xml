@@ -2,5 +2,22 @@
     <color name="primary">#2E7D32</color>
     <color name="primary_dark">#1B5E20</color>
     <color name="accent">#FFB300</color>
-    <color name="background">#0F2027</color>
+    <color name="background">#0D1B2A</color>
+    <color name="bg_dark">#0D1B2A</color>
+    <color name="bg_dark_end">#142436</color>
+    <color name="green_forest">#1B4332</color>
+    <color name="gold">#FFB703</color>
+    <color name="bright_gold">#FFD166</color>
+    <color name="card_bg">#1B263B</color>
+    <color name="cell_bg">#FFFFFF</color>
+    <color name="cell_empty_bg">#33FFFFFF</color>
+    <color name="cell_empty_border">#66FFFFFF</color>
+    <color name="cell_hinted_bg">#FFF3B0</color>
+    <color name="cell_revealed_text">#0D1B2A</color>
+    <color name="success_green">#52B788</color>
+    <color name="error_red">#E63946</color>
+    <color name="bonus_purple">#9D4EDD</color>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="semi_transparent_black">#44000000</color>
 </resources>

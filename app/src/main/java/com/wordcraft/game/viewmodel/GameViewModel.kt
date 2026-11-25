@@ -1,7 +1,6 @@
 package com.wordcraft.game.viewmodel
 
 import android.app.Application
-import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.wordcraft.game.audio.SoundEffects
@@ -80,7 +79,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     navigateTo(Screen.LEVEL_SELECT)
                     true
                 } else {
-                    // Show pause dialog or return to level select
                     _uiState.update { it.copy(isPaused = true) }
                     true
                 }
@@ -90,7 +88,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 true
             }
             Screen.HOME -> {
-                // Allow system to handle back (exit app)
                 false
             }
         }
@@ -147,8 +144,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
         val bonusFound = preferences.getBonusWordsFound(levelId)
         val matrix = repository.buildGridMatrix(level, emptySet(), emptySet())
-
-        // Shuffle letters initially so they are nicely distributed
         val initialLetters = level.letters.shuffled()
 
         _uiState.update {
@@ -162,7 +157,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 wheelLetters = initialLetters,
                 selectedIndices = emptyList(),
                 currentWord = "",
-                touchPosition = null,
                 feedbackType = FeedbackType.NONE,
                 feedbackText = "",
                 isPaused = false,
@@ -173,102 +167,33 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     // ----------------------------------------------------
-    // Gesture & Letter Wheel Handling
+    // Gesture & Touch Event Handling
     // ----------------------------------------------------
 
-    fun onTouchDown(letterIndex: Int, pos: Offset) {
-        val letters = _uiState.value.wheelLetters
-        if (letterIndex !in letters.indices) return
-
-        val newIndices = listOf(letterIndex)
-        val word = letters[letterIndex]
-
-        sounds.playLetterSelect(0)
+    fun onLetterTouch(letterIndexInSelection: Int) {
+        sounds.playLetterSelect(letterIndexInSelection)
         emitHaptic(GameUiEffect.VibrateLight)
-
-        _uiState.update {
-            it.copy(
-                selectedIndices = newIndices,
-                currentWord = word,
-                touchPosition = pos,
-                feedbackType = FeedbackType.NONE,
-                feedbackText = ""
-            )
-        }
     }
 
-    fun onTouchMove(pos: Offset, hoveredIndex: Int?) {
-        val state = _uiState.value
-        val letters = state.wheelLetters
-        val currentIndices = state.selectedIndices
-
-        if (hoveredIndex == null || hoveredIndex !in letters.indices) {
-            // Just updating the drag line to current finger position
-            _uiState.update { it.copy(touchPosition = pos) }
-            return
-        }
-
-        // Check if user is backtracking to unselect the last letter
-        if (currentIndices.size >= 2 && hoveredIndex == currentIndices[currentIndices.size - 2]) {
-            val updatedIndices = currentIndices.dropLast(1)
-            val updatedWord = updatedIndices.map { letters[it] }.joinToString("")
-            emitHaptic(GameUiEffect.VibrateLight)
-            sounds.playLetterSelect((updatedIndices.size - 1).coerceAtLeast(0))
-
-            _uiState.update {
-                it.copy(
-                    selectedIndices = updatedIndices,
-                    currentWord = updatedWord,
-                    touchPosition = pos
-                )
-            }
-            return
-        }
-
-        // If not already selected, add letter to selection
-        if (!currentIndices.contains(hoveredIndex)) {
-            val updatedIndices = currentIndices + hoveredIndex
-            val updatedWord = updatedIndices.map { letters[it] }.joinToString("")
-            emitHaptic(GameUiEffect.VibrateLight)
-            sounds.playLetterSelect(updatedIndices.size - 1)
-
-            _uiState.update {
-                it.copy(
-                    selectedIndices = updatedIndices,
-                    currentWord = updatedWord,
-                    touchPosition = pos
-                )
-            }
-        } else {
-            _uiState.update { it.copy(touchPosition = pos) }
-        }
+    fun onTouchDown(letterIndex: Int, pos: Any? = null) {
+        onLetterTouch(0)
     }
 
-    fun onTouchUp() {
-        val state = _uiState.value
-        val word = state.currentWord.trim().uppercase()
-        val level = state.currentLevel
+    fun onTouchMove(pos: Any?, hoveredIndex: Int?) {
+        // Handled within LetterWheelView
+    }
 
-        if (level == null || word.isEmpty()) {
-            _uiState.update {
-                it.copy(
-                    selectedIndices = emptyList(),
-                    currentWord = "",
-                    touchPosition = null
-                )
-            }
-            return
-        }
+    fun onTouchUp(word: String? = null) {
+        val finalWord = word ?: _uiState.value.currentWord
+        submitWord(finalWord)
+    }
+
+    fun submitWord(rawWord: String) {
+        val word = rawWord.trim().uppercase()
+        val level = _uiState.value.currentLevel ?: return
+        if (word.isEmpty()) return
 
         validateWord(word, level)
-
-        _uiState.update {
-            it.copy(
-                selectedIndices = emptyList(),
-                currentWord = "",
-                touchPosition = null
-            )
-        }
     }
 
     private fun validateWord(word: String, level: Level) {
@@ -425,7 +350,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
 
-        // Determine currently unrevealed cells directly from the board matrix
+        // Determine currently unrevealed cells directly from board matrix
         val currentMatrix = repository.buildGridMatrix(level, state.revealedWords, state.hintedCells)
         val unrevealedCells = mutableListOf<CellPosition>()
         for (r in 0 until level.grid.rows) {

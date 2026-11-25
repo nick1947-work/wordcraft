@@ -1,7 +1,5 @@
 plugins {
   alias(libs.plugins.android.application)
-  alias(libs.plugins.compose.compiler)
-  alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -38,7 +36,7 @@ android {
   }
 
   buildFeatures {
-    compose = true
+    viewBinding = true
     buildConfig = false
   }
 
@@ -54,27 +52,16 @@ kotlin {
 }
 
 dependencies {
-  val composeBom = platform(libs.androidx.compose.bom)
-  implementation(composeBom)
-  androidTestImplementation(composeBom)
+  implementation("androidx.appcompat:appcompat:1.7.0")
+  implementation("com.google.android.material:material:1.12.0")
+  implementation("androidx.constraintlayout:constraintlayout:2.2.0")
+  implementation("androidx.recyclerview:recyclerview:1.3.2")
+  implementation("androidx.activity:activity-ktx:1.9.3")
+  implementation("androidx.fragment:fragment-ktx:1.8.5")
 
-  // Core Android
   implementation(libs.androidx.core.ktx)
   implementation(libs.androidx.lifecycle.runtime.ktx)
-  implementation(libs.androidx.activity.compose)
-
-  // Lifecycle & ViewModel
-  implementation(libs.androidx.lifecycle.runtime.compose)
-  implementation(libs.androidx.lifecycle.viewmodel.compose)
-
-  // Compose
-  implementation(libs.androidx.compose.ui)
-  implementation(libs.androidx.compose.ui.tooling.preview)
-  implementation(libs.androidx.compose.material3)
-  implementation(libs.androidx.compose.material.icons.extended)
-
-  debugImplementation(libs.androidx.compose.ui.tooling)
-  debugImplementation(libs.androidx.compose.ui.test.manifest)
+  implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7")
 
   testImplementation(libs.junit)
   testImplementation(libs.kotlinx.coroutines.test)

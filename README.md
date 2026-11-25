@@ -1,13 +1,17 @@
-# WordCraft - Word Puzzle Game (Android)
+# WordCraft - Word Puzzle Game (Android - XML Views)
 
-A fully functional, highly polished Wordscapes-style word puzzle game built for Android using modern Jetpack Compose, Kotlin, and MVI/MVVM architecture.
+A fully functional, highly polished Wordscapes-style word puzzle game built for Android using **Kotlin, XML Layouts, Material Components, ViewBinding**, and **MVI/MVVM architecture**.
+
+> 💡 **Branch Info**:
+> - `xml-views` (this branch): Kotlin + XML Views, ViewBinding, Fragment Navigation, and custom Canvas Views (`LetterWheelView`, `CrosswordGridView`). APK size: **6.4 MB**.
+> - `compose`: Jetpack Compose implementation.
 
 ---
 
 ## 🌟 Highlights & Features
 
-- **Crossword-Style Grid**: Dynamic, auto-scaling crossword grid with smooth reveal animations, flip transitions, and hint highlights.
-- **Circular Letter Wheel**: Custom Compose Canvas drawing featuring:
+- **Crossword-Style Grid**: Custom `CrosswordGridView` that auto-scales dynamically to any device screen size, featuring smooth reveal animations, flip transitions, and hint indicator highlights.
+- **Circular Letter Wheel (`LetterWheelView`)**: Custom Canvas drawing featuring:
   - Dynamic gradient line visually tracking real-time finger movement.
   - Glowing connections between selected letters.
   - Scale bounce micro-interactions on letter selection.
@@ -27,7 +31,8 @@ A fully functional, highly polished Wordscapes-style word puzzle game built for 
   - Tactile feedback (haptic ticks on letter hover, success pulses, error double-buzz).
   - In-game toggles for sound and haptics in the Pause menu.
 - **Flawless Navigation & State Management**:
-  - Complete back stack hygiene (`Home` → `Level Select` → `Gameplay` → `Pause`).
+  - Complete back stack hygiene using Android Fragments (`HomeFragment` → `LevelSelectFragment` → `GameFragment` → `PauseDialogFragment`).
+  - Handles system back button presses without memory leaks, lost state, or duplicate screens.
   - Game state survives configuration changes (screen rotation) and app backgrounding.
   - Persistent progression (unlocked levels, coins, bonus words) saved via `GamePreferences`.
 
@@ -40,7 +45,7 @@ The project adheres to **Clean Architecture** and **Unidirectional Data Flow (UD
 ```
 ┌────────────────────────────────────────────────────────┐
 │                        UI Layer                        │
-│   (Jetpack Compose + Custom Canvas + AnimatedContent)  │
+│   (Kotlin XML + ViewBinding + Fragments + Canvas Views)│
 └───────────────────────▲────────────────────────────────┘
                         │ Observes StateFlow<GameUiState>
                         │ Receives SharedFlow<GameUiEffect>
@@ -63,21 +68,21 @@ The project adheres to **Clean Architecture** and **Unidirectional Data Flow (UD
 
 ### 1. Presentation & State Observation
 - Single source of truth: `StateFlow<GameUiState>` in `GameViewModel`.
-- UI events and gesture inputs are sent directly to the ViewModel, which produces new immutable UI state copies (`uiState.copy(...)`).
+- Observed in Fragments via `viewLifecycleOwner.lifecycleScope.launch { repeatOnLifecycle(Lifecycle.State.STARTED) { ... } }`.
 - One-off transient events (such as tactile haptic pulses) are dispatched via `SharedFlow<GameUiEffect>`.
 
 ### 2. State Retention & Lifecycle Hygiene
-- The ViewModel is scoped to the activity/navigation stack, guaranteeing retention across screen rotations and configuration changes.
-- System back button handling is cleanly managed via Compose's `BackHandler`:
-  - From `GAMEPLAY`: opens the Pause modal or returns to `LEVEL_SELECT`.
-  - From `LEVEL_SELECT`: navigates back to `HOME`.
-  - From `HOME`: exits cleanly without orphaned dialogs or memory leaks.
+- The ViewModel is scoped to `activityViewModels()`, guaranteeing retention across screen rotations and configuration changes.
+- System back button handling is cleanly managed via FragmentManager and `OnBackPressedCallback`:
+  - From `GameFragment`: opens the Pause modal or returns to `LevelSelectFragment`.
+  - From `LevelSelectFragment`: navigates back to `HomeFragment`.
+  - From `HomeFragment`: exits cleanly without orphaned dialogs or memory leaks.
 
 ---
 
 ## 👆 Custom Swipe & Gesture Handling
 
-The letter wheel is rendered on a Compose `Canvas` backed by pointer gesture detection:
+The letter wheel is rendered on a custom `LetterWheelView` backed by `onTouchEvent`:
 
 1. **Radial Geometry**:
    Letter positions are computed radially around the wheel center:
@@ -85,17 +90,14 @@ The letter wheel is rendered on a Compose `Canvas` backed by pointer gesture det
    $$(x_i, y_i) = (c_x + R \cos\theta_i, \; c_y + R \sin\theta_i)$$
 
 2. **Hit Testing & Tolerance**:
-   Each letter circle has an active hit radius ($r_{hit} \approx 42\text{dp}$) with hysteresis, preventing false un-touches during fast finger movement.
+   Each letter circle has an active hit radius ($r_{hit} \approx 38\text{dp}$) with hysteresis, preventing false un-touches during fast finger movement.
 
 3. **Dynamic Line Tracking**:
-   - For connected letters, static lines connect center-to-center with a 2-pass stroke (an outer translucent glow stroke and an inner vibrant golden stroke with `StrokeCap.Round` and `StrokeJoin.Round`).
-   - A dynamic rubber-band line tracks from the last selected letter directly to the player's active finger coordinate (`touchPosition`).
+   - For connected letters, static lines connect center-to-center with a 2-pass stroke (an outer translucent glow stroke and an inner vibrant golden stroke with `Paint.Cap.ROUND` and `Paint.Join.ROUND`).
+   - A dynamic rubber-band line tracks from the last selected letter directly to the player's active finger coordinate (`touchPoint`).
 
 4. **Backtracking Undo**:
    If the player drags their finger back over the second-to-last selected letter, the gesture engine pops the last letter, allowing smooth corrections without having to lift the finger.
-
-5. **Rapid Swiping & Cancellation**:
-   Pointer input handles `onDrag`, `onDragEnd`, and `onDragCancel` defensively, ensuring all touch positions and transient state are cleaned up gracefully.
 
 ---
 
@@ -125,18 +127,14 @@ Levels are stored in `app/src/main/assets/levels.json` and parsed cleanly by `Le
 }
 ```
 
-- Each word specifies its exact `startRow`, `startCol`, and orientation (`isHorizontal`).
-- Intersections are mathematically validated so intersecting cells share identical letters.
-- `LevelRepository.buildGridMatrix(...)` transforms this schema into an indexed 2D matrix of `CellData?`, making crossword cell rendering $O(1)$ per cell.
-
 ---
 
 ## 🛠️ Building & Running
 
 ### Requirements
-- Android SDK 35 / 34
+- Android SDK 36 / 35 / 34
 - JDK 17
-- Gradle 8.x / 9.x (Gradle wrapper included)
+- Gradle 9.x (Gradle wrapper included)
 
 ### Commands
 ```bash
