@@ -78,24 +78,44 @@ class CrosswordGridView @JvmOverloads constructor(
     }
 
     private val cellRect = RectF()
+    private val newlyRevealed = mutableSetOf<Pair<Int, Int>>()
+    private var revealAnimator: ValueAnimator? = null
 
     fun setGrid(matrix: List<List<CellData?>>) {
+        val oldMatrix = gridMatrix
+        val sameDimensions = oldMatrix.size == matrix.size &&
+            (oldMatrix.firstOrNull()?.size ?: 0) == (matrix.firstOrNull()?.size ?: 0)
+
+        newlyRevealed.clear()
+        if (sameDimensions) {
+            for (r in matrix.indices) {
+                for (c in matrix[r].indices) {
+                    val nowRevealed = matrix[r][c]?.isRevealed == true
+                    val wasRevealed = oldMatrix.getOrNull(r)?.getOrNull(c)?.isRevealed == true
+                    if (nowRevealed && !wasRevealed) newlyRevealed.add(r to c)
+                }
+            }
+        }
+
         gridMatrix = matrix
         rows = matrix.size
         cols = matrix.maxOfOrNull { it.size } ?: 0
         recalculateLayout()
-        invalidate()
-    }
 
-    fun animateWordReveal() {
-        ValueAnimator.ofFloat(0.7f, 1f).apply {
-            duration = 350
-            interpolator = OvershootInterpolator(1.5f)
-            addUpdateListener {
-                revealAnimScale = it.animatedValue as Float
-                invalidate()
+        if (newlyRevealed.isNotEmpty()) {
+            revealAnimator?.cancel()
+            revealAnimator = ValueAnimator.ofFloat(0.6f, 1f).apply {
+                duration = 320
+                interpolator = OvershootInterpolator(1.5f)
+                addUpdateListener {
+                    revealAnimScale = it.animatedValue as Float
+                    invalidate()
+                }
+                start()
             }
-            start()
+        } else {
+            revealAnimScale = 1f
+            invalidate()
         }
     }
 
@@ -146,21 +166,25 @@ class CrosswordGridView @JvmOverloads constructor(
                 cellRect.set(left, top, right, bottom)
 
                 if (cell.isRevealed) {
+                    val cx = left + cellSize / 2f
+                    val cy = top + cellSize / 2f
+                    val shouldScale = newlyRevealed.contains(r to c) && revealAnimScale != 1f
+                    if (shouldScale) {
+                        canvas.save()
+                        canvas.scale(revealAnimScale, revealAnimScale, cx, cy)
+                    }
+
                     val bgPaint = if (cell.isHinted) hintedCellBgPaint else revealedCellBgPaint
                     val borderPaint = if (cell.isHinted) hintedCellBorderPaint else revealedCellBorderPaint
 
                     canvas.drawRoundRect(cellRect, cornerRadius, cornerRadius, bgPaint)
                     canvas.drawRoundRect(cellRect, cornerRadius, cornerRadius, borderPaint)
-
-                    // Draw letter
-                    val cx = left + cellSize / 2f
-                    val cy = top + cellSize / 2f
                     canvas.drawText(cell.letter.toString(), cx, cy - textOffsetY, textPaint)
 
-                    // Draw hint dot
                     if (cell.isHinted) {
                         canvas.drawCircle(right - dpToPx(5f), top + dpToPx(5f), dpToPx(3f), hintDotPaint)
                     }
+                    if (shouldScale) canvas.restore()
                 } else {
                     // Empty cell placeholder
                     canvas.drawRoundRect(cellRect, cornerRadius, cornerRadius, emptyCellBgPaint)

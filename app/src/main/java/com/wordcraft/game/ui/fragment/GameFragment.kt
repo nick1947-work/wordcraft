@@ -1,6 +1,7 @@
 package com.wordcraft.game.ui.fragment
 
 import android.animation.ObjectAnimator
+import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -30,6 +31,7 @@ class GameFragment : Fragment() {
     private val binding get() = _binding!!
 
     private var hasShownCelebration = false
+    private var isDragging = false
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -60,14 +62,15 @@ class GameFragment : Fragment() {
     private fun setupListeners() {
         binding.letterWheelView.listener = object : LetterWheelView.OnWordGestureListener {
             override fun onLetterSelected(index: Int, letter: String) {
-                viewModel.onTouchDown(index)
+                isDragging = true
+                viewModel.onLetterTouch(index)
             }
 
             override fun onWordUpdated(currentWord: String) {
                 if (currentWord.isNotEmpty()) {
                     binding.tvWordPreview.visibility = View.VISIBLE
                     binding.tvWordPreview.text = currentWord
-                    binding.tvWordPreview.setBackgroundResource(R.drawable.bg_preview_pill)
+                    binding.tvWordPreview.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#E6FFFFFF"))
                     binding.tvWordPreview.setTextColor(Color.parseColor("#0D1B2A"))
                 } else {
                     binding.tvWordPreview.visibility = View.INVISIBLE
@@ -75,7 +78,13 @@ class GameFragment : Fragment() {
             }
 
             override fun onWordCompleted(word: String) {
-                viewModel.onTouchUp()
+                isDragging = false
+                if (word.length < 2) {
+                    binding.tvWordPreview.text = ""
+                    binding.tvWordPreview.visibility = View.INVISIBLE
+                } else {
+                    viewModel.submitWord(word)
+                }
             }
         }
 
@@ -124,9 +133,6 @@ class GameFragment : Fragment() {
 
                     // Crossword grid
                     binding.crosswordGridView.setGrid(state.gridMatrix)
-                    if (state.recentlySolvedWord != null) {
-                        binding.crosswordGridView.animateWordReveal()
-                    }
 
                     // Word Feedback
                     handleFeedback(state.feedbackType, state.feedbackText)
@@ -146,7 +152,8 @@ class GameFragment : Fragment() {
 
     private fun handleFeedback(type: FeedbackType, text: String) {
         if (type == FeedbackType.NONE) {
-            if (binding.tvWordPreview.text.isEmpty()) {
+            if (!isDragging) {
+                binding.tvWordPreview.text = ""
                 binding.tvWordPreview.visibility = View.INVISIBLE
             }
             return
@@ -155,27 +162,16 @@ class GameFragment : Fragment() {
         binding.tvWordPreview.visibility = View.VISIBLE
         binding.tvWordPreview.text = text
 
-        when (type) {
-            FeedbackType.VALID -> {
-                binding.tvWordPreview.setBackgroundColor(Color.parseColor("#52B788"))
-                binding.tvWordPreview.setTextColor(Color.WHITE)
-            }
-            FeedbackType.BONUS -> {
-                binding.tvWordPreview.setBackgroundColor(Color.parseColor("#9D4EDD"))
-                binding.tvWordPreview.setTextColor(Color.WHITE)
-            }
-            FeedbackType.ALREADY_FOUND -> {
-                binding.tvWordPreview.setBackgroundColor(Color.parseColor("#FFB703"))
-                binding.tvWordPreview.setTextColor(Color.BLACK)
-                shakePreview()
-            }
-            FeedbackType.INVALID -> {
-                binding.tvWordPreview.setBackgroundColor(Color.parseColor("#E63946"))
-                binding.tvWordPreview.setTextColor(Color.WHITE)
-                shakePreview()
-            }
-            FeedbackType.NONE -> {}
+        val (bgColor, textColor, shouldShake) = when (type) {
+            FeedbackType.VALID -> Triple("#52B788", Color.WHITE, false)
+            FeedbackType.BONUS -> Triple("#9D4EDD", Color.WHITE, false)
+            FeedbackType.ALREADY_FOUND -> Triple("#FFB703", Color.BLACK, true)
+            FeedbackType.INVALID -> Triple("#E63946", Color.WHITE, true)
+            FeedbackType.NONE -> return
         }
+        binding.tvWordPreview.backgroundTintList = ColorStateList.valueOf(Color.parseColor(bgColor))
+        binding.tvWordPreview.setTextColor(textColor)
+        if (shouldShake) shakePreview()
     }
 
     private fun shakePreview() {
@@ -196,7 +192,7 @@ class GameFragment : Fragment() {
                     viewModel.restartCurrentLevel()
                 }
                 override fun onLevelSelectClicked() {
-                    parentFragmentManager.popBackStack()
+                    navigateToLevelSelect()
                 }
                 override fun onToggleSound() {
                     viewModel.toggleSound()
@@ -219,11 +215,27 @@ class GameFragment : Fragment() {
                     viewModel.nextLevel()
                 }
                 override fun onLevelSelectClicked() {
-                    parentFragmentManager.popBackStack()
+                    navigateToLevelSelect()
                 }
             }
         }
         dialog.show(parentFragmentManager, LevelCompleteDialogFragment.TAG)
+    }
+
+    private fun navigateToLevelSelect() {
+        val fm = parentFragmentManager
+        val hasLevels = (0 until fm.backStackEntryCount).any {
+            fm.getBackStackEntryAt(it).name == "levels"
+        }
+        if (hasLevels) {
+            fm.popBackStack("levels", 0)
+        } else {
+            fm.popBackStack()
+            fm.beginTransaction()
+                .replace(R.id.fragment_container, LevelSelectFragment())
+                .addToBackStack("levels")
+                .commit()
+        }
     }
 
     private fun showBonusWordsDialog() {

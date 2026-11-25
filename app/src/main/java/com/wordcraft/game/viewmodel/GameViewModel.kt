@@ -11,7 +11,6 @@ import com.wordcraft.game.data.repository.LevelRepository
 import com.wordcraft.game.domain.FeedbackType
 import com.wordcraft.game.domain.GameUiEffect
 import com.wordcraft.game.domain.GameUiState
-import com.wordcraft.game.domain.Screen
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -39,90 +38,30 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         val allLevels = repository.getLevels()
-        val highestUnlocked = preferences.highestUnlockedLevel
-        val coins = preferences.coins
         val soundOn = preferences.soundEnabled
-        val hapticsOn = preferences.hapticsEnabled
         sounds.isEnabled = soundOn
 
         _uiState.update {
             it.copy(
                 allLevels = allLevels,
-                highestUnlockedLevel = highestUnlocked,
-                coins = coins,
+                highestUnlockedLevel = preferences.highestUnlockedLevel,
+                coins = preferences.coins,
                 soundEnabled = soundOn,
-                hapticsEnabled = hapticsOn
+                hapticsEnabled = preferences.hapticsEnabled
             )
         }
 
-        // Start with the current saved level
-        val initialLevelId = preferences.currentLevelId.coerceIn(1, (allLevels.size).coerceAtLeast(1))
-        loadLevel(initialLevelId, targetScreen = Screen.HOME)
+        val initialLevelId = preferences.currentLevelId.coerceIn(1, allLevels.size.coerceAtLeast(1))
+        loadLevel(initialLevelId)
     }
 
-    // ----------------------------------------------------
-    // Navigation
-    // ----------------------------------------------------
+    fun selectLevel(levelId: Int) = loadLevel(levelId)
 
-    fun navigateTo(screen: Screen) {
-        _uiState.update { it.copy(currentScreen = screen, isPaused = false) }
-    }
-
-    fun handleBackPress(): Boolean {
-        val state = _uiState.value
-        return when (state.currentScreen) {
-            Screen.GAMEPLAY -> {
-                if (state.isPaused) {
-                    _uiState.update { it.copy(isPaused = false) }
-                    true
-                } else if (state.isLevelComplete) {
-                    navigateTo(Screen.LEVEL_SELECT)
-                    true
-                } else {
-                    _uiState.update { it.copy(isPaused = true) }
-                    true
-                }
-            }
-            Screen.LEVEL_SELECT -> {
-                navigateTo(Screen.HOME)
-                true
-            }
-            Screen.HOME -> {
-                false
-            }
-        }
-    }
-
-    fun selectLevel(levelId: Int) {
-        loadLevel(levelId, targetScreen = Screen.GAMEPLAY)
-    }
-
-    fun restartCurrentLevel() {
-        val currentId = _uiState.value.currentLevel?.id ?: 1
-        loadLevel(currentId, targetScreen = Screen.GAMEPLAY)
-    }
+    fun restartCurrentLevel() = loadLevel(_uiState.value.currentLevel?.id ?: 1)
 
     fun nextLevel() {
-        val currentId = _uiState.value.currentLevel?.id ?: 1
-        val nextId = currentId + 1
-        val all = _uiState.value.allLevels
-        if (nextId <= all.size) {
-            loadLevel(nextId, targetScreen = Screen.GAMEPLAY)
-        } else {
-            navigateTo(Screen.LEVEL_SELECT)
-        }
-    }
-
-    fun pauseGame() {
-        _uiState.update { it.copy(isPaused = true) }
-    }
-
-    fun resumeGame() {
-        _uiState.update { it.copy(isPaused = false) }
-    }
-
-    fun toggleBonusDialog(show: Boolean) {
-        _uiState.update { it.copy(showBonusDialog = show) }
+        val nextId = (_uiState.value.currentLevel?.id ?: 1) + 1
+        if (nextId <= _uiState.value.allLevels.size) loadLevel(nextId)
     }
 
     fun toggleSound() {
@@ -138,80 +77,48 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.update { it.copy(hapticsEnabled = newHaptics) }
     }
 
-    private fun loadLevel(levelId: Int, targetScreen: Screen) {
+    private fun loadLevel(levelId: Int) {
         val level = repository.getLevelById(levelId) ?: return
         preferences.currentLevelId = levelId
 
-        val bonusFound = preferences.getBonusWordsFound(levelId)
-        val matrix = repository.buildGridMatrix(level, emptySet(), emptySet())
-        val initialLetters = level.letters.shuffled()
-
         _uiState.update {
             it.copy(
-                currentScreen = targetScreen,
                 currentLevel = level,
-                gridMatrix = matrix,
+                gridMatrix = repository.buildGridMatrix(level, emptySet(), emptySet()),
                 revealedWords = emptySet(),
-                bonusWordsFound = bonusFound,
+                bonusWordsFound = preferences.getBonusWordsFound(levelId),
                 hintedCells = emptySet(),
-                wheelLetters = initialLetters,
-                selectedIndices = emptyList(),
-                currentWord = "",
+                wheelLetters = level.letters.shuffled(),
                 feedbackType = FeedbackType.NONE,
                 feedbackText = "",
-                isPaused = false,
-                isLevelComplete = false,
-                recentlySolvedWord = null
+                isLevelComplete = false
             )
         }
     }
 
-    // ----------------------------------------------------
-    // Gesture & Touch Event Handling
-    // ----------------------------------------------------
-
-    fun onLetterTouch(letterIndexInSelection: Int) {
-        sounds.playLetterSelect(letterIndexInSelection)
+    fun onLetterTouch(selectionOrder: Int) {
+        sounds.playLetterSelect(selectionOrder)
         emitHaptic(GameUiEffect.VibrateLight)
-    }
-
-    fun onTouchDown(letterIndex: Int, pos: Any? = null) {
-        onLetterTouch(0)
-    }
-
-    fun onTouchMove(pos: Any?, hoveredIndex: Int?) {
-        // Handled within LetterWheelView
-    }
-
-    fun onTouchUp(word: String? = null) {
-        val finalWord = word ?: _uiState.value.currentWord
-        submitWord(finalWord)
     }
 
     fun submitWord(rawWord: String) {
         val word = rawWord.trim().uppercase()
         val level = _uiState.value.currentLevel ?: return
-        if (word.isEmpty()) return
+        if (word.length < 2) return
 
-        validateWord(word, level)
-    }
-
-    private fun validateWord(word: String, level: Level) {
         val state = _uiState.value
-        val isGridWord = level.grid.words.any { it.word.equals(word, ignoreCase = true) }
-        val isBonusWord = level.bonusWords.any { it.equals(word, ignoreCase = true) }
+        val matchedGridWord = level.grid.words.find { it.word.equals(word, ignoreCase = true) }?.word
+        val matchedBonusWord = level.bonusWords.find { it.equals(word, ignoreCase = true) }
 
         feedbackJob?.cancel()
 
         when {
-            isGridWord -> {
-                if (state.revealedWords.contains(word)) {
+            matchedGridWord != null -> {
+                if (state.revealedWords.contains(matchedGridWord)) {
                     showFeedback(FeedbackType.ALREADY_FOUND, "Already Found!")
                     emitHaptic(GameUiEffect.VibrateMedium)
                 } else {
-                    // Newly found grid word!
-                    val newRevealed = state.revealedWords + word
-                    val updatedMatrix = repository.buildGridMatrix(level, newRevealed, state.hintedCells)
+                    val newRevealed = state.revealedWords + matchedGridWord
                     val newCoins = state.coins + 10
                     preferences.coins = newCoins
 
@@ -221,30 +128,27 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     _uiState.update {
                         it.copy(
                             revealedWords = newRevealed,
-                            gridMatrix = updatedMatrix,
+                            gridMatrix = repository.buildGridMatrix(level, newRevealed, state.hintedCells),
                             coins = newCoins,
-                            recentlySolvedWord = word,
                             feedbackType = FeedbackType.VALID,
                             feedbackText = "Brilliant!"
                         )
                     }
 
-                    // Check if all words are solved
-                    val isComplete = newRevealed.size >= level.grid.words.size
-                    if (isComplete) {
+                    if (newRevealed.size >= level.grid.words.size) {
                         handleLevelComplete(level)
                     } else {
                         scheduleClearFeedback(1200)
                     }
                 }
             }
-            isBonusWord -> {
-                if (state.bonusWordsFound.contains(word)) {
+            matchedBonusWord != null -> {
+                if (state.bonusWordsFound.contains(matchedBonusWord)) {
                     showFeedback(FeedbackType.ALREADY_FOUND, "Bonus Already Found!")
                     emitHaptic(GameUiEffect.VibrateLight)
                 } else {
-                    val newBonusFound = state.bonusWordsFound + word
-                    preferences.addBonusWord(level.id, word)
+                    val newBonus = state.bonusWordsFound + matchedBonusWord
+                    preferences.addBonusWord(level.id, matchedBonusWord)
                     val newCoins = state.coins + 5
                     preferences.coins = newCoins
 
@@ -253,7 +157,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
                     _uiState.update {
                         it.copy(
-                            bonusWordsFound = newBonusFound,
+                            bonusWordsFound = newBonus,
                             coins = newCoins,
                             feedbackType = FeedbackType.BONUS,
                             feedbackText = "Bonus Word +5 🪙"
@@ -263,24 +167,19 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
             else -> {
-                if (word.length >= 2) {
-                    showFeedback(FeedbackType.INVALID, "Not in Puzzle")
-                    emitHaptic(GameUiEffect.VibrateError)
-                    sounds.playWordInvalid()
-                }
+                showFeedback(FeedbackType.INVALID, "Not in Puzzle")
+                emitHaptic(GameUiEffect.VibrateError)
+                sounds.playWordInvalid()
             }
         }
     }
 
     private fun handleLevelComplete(level: Level) {
         preferences.setLevelCompleted(level.id, true)
-        val nextLevelId = level.id + 1
-        if (nextLevelId > preferences.highestUnlockedLevel) {
-            preferences.highestUnlockedLevel = nextLevelId
+        if (level.id + 1 > preferences.highestUnlockedLevel) {
+            preferences.highestUnlockedLevel = level.id + 1
         }
-
-        val bonusReward = 50
-        val finalCoins = preferences.coins + bonusReward
+        val finalCoins = preferences.coins + 50
         preferences.coins = finalCoins
 
         viewModelScope.launch {
@@ -291,8 +190,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     isLevelComplete = true,
                     coins = finalCoins,
                     highestUnlockedLevel = preferences.highestUnlockedLevel,
-                    celebrationTimestamp = System.currentTimeMillis(),
-                    feedbackType = FeedbackType.NONE
+                    feedbackType = FeedbackType.NONE,
+                    feedbackText = ""
                 )
             }
         }
@@ -307,36 +206,24 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         feedbackJob?.cancel()
         feedbackJob = viewModelScope.launch {
             delay(delayMs)
-            _uiState.update {
-                it.copy(feedbackType = FeedbackType.NONE, feedbackText = "", recentlySolvedWord = null)
-            }
+            _uiState.update { it.copy(feedbackType = FeedbackType.NONE, feedbackText = "") }
         }
     }
 
-    // ----------------------------------------------------
-    // Actions: Shuffle & Hint
-    // ----------------------------------------------------
-
     fun shuffleWheel() {
-        val currentLetters = _uiState.value.wheelLetters
-        if (currentLetters.size <= 1) return
+        val current = _uiState.value.wheelLetters
+        if (current.size <= 1) return
 
-        var shuffled = currentLetters.shuffled()
+        var shuffled = current.shuffled()
         var attempts = 0
-        while (shuffled == currentLetters && attempts < 5) {
-            shuffled = currentLetters.shuffled()
+        while (shuffled == current && attempts < 5) {
+            shuffled = current.shuffled()
             attempts++
         }
 
         sounds.playShuffle()
         emitHaptic(GameUiEffect.VibrateLight)
-
-        _uiState.update {
-            it.copy(
-                wheelLetters = shuffled,
-                shuffleAnimKey = it.shuffleAnimKey + 1
-            )
-        }
+        _uiState.update { it.copy(wheelLetters = shuffled) }
     }
 
     fun useHint() {
@@ -350,32 +237,25 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
 
-        // Determine currently unrevealed cells directly from board matrix
         val currentMatrix = repository.buildGridMatrix(level, state.revealedWords, state.hintedCells)
-        val unrevealedCells = mutableListOf<CellPosition>()
-        for (r in 0 until level.grid.rows) {
-            for (c in 0 until level.grid.cols) {
-                val cell = currentMatrix[r][c]
-                if (cell != null && !cell.isRevealed) {
-                    unrevealedCells.add(CellPosition(r, c))
+        val unrevealedCells = buildList {
+            for (r in 0 until level.grid.rows) {
+                for (c in 0 until level.grid.cols) {
+                    if (currentMatrix[r][c]?.isRevealed == false) add(CellPosition(r, c))
                 }
             }
         }
-
         if (unrevealedCells.isEmpty()) return
 
-        val targetCell = unrevealedCells.random()
-        val newHinted = state.hintedCells + targetCell
+        val newHinted = state.hintedCells + unrevealedCells.random()
         val updatedCoins = state.coins - hintCost
         preferences.coins = updatedCoins
 
         val updatedMatrix = repository.buildGridMatrix(level, state.revealedWords, newHinted)
-
-        // Auto-complete words whose cells are now all revealed
         val newlySolvedWords = level.grid.words.filter { gridWord ->
             gridWord.cells().all { (r, c) -> updatedMatrix[r][c]?.isRevealed == true }
         }.map { it.word }.toSet()
-        val allRevealedWords = state.revealedWords + newlySolvedWords
+        val allRevealed = state.revealedWords + newlySolvedWords
 
         sounds.playHint()
         emitHaptic(GameUiEffect.VibrateMedium)
@@ -383,7 +263,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.update {
             it.copy(
                 hintedCells = newHinted,
-                revealedWords = allRevealedWords,
+                revealedWords = allRevealed,
                 coins = updatedCoins,
                 gridMatrix = updatedMatrix,
                 feedbackType = FeedbackType.BONUS,
@@ -392,14 +272,12 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         }
         scheduleClearFeedback(1200)
 
-        if (allRevealedWords.size >= level.grid.words.size && !_uiState.value.isLevelComplete) {
+        if (allRevealed.size >= level.grid.words.size && !_uiState.value.isLevelComplete) {
             handleLevelComplete(level)
         }
     }
 
     private fun emitHaptic(effect: GameUiEffect) {
-        if (_uiState.value.hapticsEnabled) {
-            _uiEffects.tryEmit(effect)
-        }
+        if (_uiState.value.hapticsEnabled) _uiEffects.tryEmit(effect)
     }
 }

@@ -105,6 +105,7 @@ class LetterWheelView @JvmOverloads constructor(
     private val path = Path()
 
     fun setLetters(newLetters: List<String>) {
+        if (letters == newLetters) return
         letters = newLetters
         selectedIndices.clear()
         touchPoint = null
@@ -211,7 +212,7 @@ class LetterWheelView @JvmOverloads constructor(
                     selectedIndices.clear()
                     selectedIndices.add(hitIdx)
                     touchPoint = PointF(event.x, event.y)
-                    listener?.onLetterSelected(hitIdx, letters[hitIdx])
+                    listener?.onLetterSelected(0, letters[hitIdx])
                     listener?.onWordUpdated(letters[hitIdx])
                     invalidate()
                     return true
@@ -231,7 +232,7 @@ class LetterWheelView @JvmOverloads constructor(
                         } else if (!selectedIndices.contains(hitIdx)) {
                             // Add new letter
                             selectedIndices.add(hitIdx)
-                            listener?.onLetterSelected(hitIdx, letters[hitIdx])
+                            listener?.onLetterSelected(selectedIndices.size - 1, letters[hitIdx])
                             val currentWord = selectedIndices.map { letters[it] }.joinToString("")
                             listener?.onWordUpdated(currentWord)
                         }
