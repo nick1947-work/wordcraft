@@ -125,10 +125,10 @@ class LetterWheelView @JvmOverloads constructor(
         super.onSizeChanged(w, h, oldw, oldh)
         centerX = w / 2f
         centerY = h / 2f
-        val size = min(w, h)
-        wheelRadius = size * 0.36f
-        letterBubbleRadius = dpToPx(26f)
-        hitRadius = dpToPx(38f)
+        val maxRadius = (min(w, h) / 2f) - dpToPx(4f)
+        letterBubbleRadius = dpToPx(24f)
+        wheelRadius = (maxRadius - letterBubbleRadius - dpToPx(10f)).coerceAtLeast(dpToPx(40f))
+        hitRadius = dpToPx(36f)
         recalculateLetterPositions()
     }
 
@@ -149,7 +149,7 @@ class LetterWheelView @JvmOverloads constructor(
         super.onDraw(canvas)
 
         // 1. Draw outer wheel background plate
-        val plateRadius = wheelRadius + letterBubbleRadius + dpToPx(12f)
+        val plateRadius = wheelRadius + letterBubbleRadius + dpToPx(10f)
         canvas.drawCircle(centerX, centerY, plateRadius, platePaint)
         canvas.drawCircle(centerX, centerY, plateRadius, plateBorderPaint)
 
