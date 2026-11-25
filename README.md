@@ -1,109 +1,55 @@
-# WordCraft - Word Puzzle Game (Android - XML Views)
+# WordCraft - Word Puzzle Game (Android)
 
-A fully functional, highly polished Wordscapes-style word puzzle game built for Android using **Kotlin, XML Layouts, Material Components, ViewBinding**, and **MVI/MVVM architecture**.
-
-> 💡 **Branch Info**:
-> - `xml-views` (this branch): Kotlin + XML Views, ViewBinding, Fragment Navigation, and custom Canvas Views (`LetterWheelView`, `CrosswordGridView`). APK size: **6.4 MB**.
-> - `compose`: Jetpack Compose implementation.
+A Wordscapes-style word puzzle game for Android built with **Kotlin**, **XML Views (`ViewBinding`)**, **Custom Canvas Views**, and **MVVM architecture**.
 
 ---
 
-## 🌟 Highlights & Features
+## 🌟 Features
 
-- **Crossword-Style Grid**: Custom `CrosswordGridView` that auto-scales dynamically to any device screen size, featuring smooth reveal animations, flip transitions, and hint indicator highlights.
-- **Circular Letter Wheel (`LetterWheelView`)**: Custom Canvas drawing featuring:
-  - Dynamic gradient line visually tracking real-time finger movement.
-  - Glowing connections between selected letters.
-  - Scale bounce micro-interactions on letter selection.
-  - Dynamic letter backtracking (drag back to undo the previous selection).
-  - Rapid swiping and touch cancellation resilience.
+- **Crossword Grid (`CrosswordGridView`)**: Custom `View` that auto-scales to any screen size, with bounce-reveal animations for newly solved words and gold indicator dots for hinted cells.
+- **Circular Letter Wheel (`LetterWheelView`)**: Custom `Canvas` `View` supporting:
+  - Continuous swipe gestures with a dynamic rubber-band line tracking the finger in real time.
+  - Glowing dual-stroke connections between selected letters and scale-up micro-interactions.
+  - Backtracking undo (drag back over the previous letter to deselect it).
+  - Animated 360° shuffle rotation.
 - **Word Validation & Feedback**:
-  - **Valid Grid Words**: Revealed with bounce animation into the crossword grid, chimes, and coin rewards.
-  - **Bonus Words**: Discovered extra words reward bonus coins and are tracked in the Bonus Words vault.
-  - **Invalid Words**: Interactive preview bar shake with red error tint and low tone buzz.
-  - **Already Found Words**: Warning shake with amber highlight.
-- **Progression & Level Dataset**:
-  - **15 Handcrafted, Fully Playable Levels** loaded from structured JSON assets (`assets/levels.json`), featuring 3 to 5 letter wheels, intersecting crossword layouts, and bonus word collections.
-  - Automatic level progression upon puzzle completion with confetti particle celebration and victory dialog.
-- **Sound & Haptics Engine**:
-  - Dynamic pentatonic chime progression (each letter connected sounds higher in pitch).
-  - Procedural sound synthesis via Android `AudioTrack` (zero external asset dependencies, zero latency).
-  - Tactile feedback (haptic ticks on letter hover, success pulses, error double-buzz).
-  - In-game toggles for sound and haptics in the Pause menu.
-- **Flawless Navigation & State Management**:
-  - Complete back stack hygiene using Android Fragments (`HomeFragment` → `LevelSelectFragment` → `GameFragment` → `PauseDialogFragment`).
-  - Handles system back button presses without memory leaks, lost state, or duplicate screens.
-  - Game state survives configuration changes (screen rotation) and app backgrounding.
-  - Persistent progression (unlocked levels, coins, bonus words) saved via `GamePreferences`.
+  - **Valid Grid Words**: Pop-revealed in the crossword grid, +10 coins, pentatonic/chord sound FX.
+  - **Bonus Words**: Extra valid words award +5 coins and are tracked in `BonusWordsDialogFragment`.
+  - **Invalid / Duplicate Words**: Horizontal shake animation on the preview pill with color-coded feedback.
+- **Level Dataset & Progression**:
+  - **15 Playable Levels** loaded from `app/src/main/assets/levels.json` (3–5 letter wheels, intersecting crossword layouts, bonus words).
+  - Confetti particle celebration (`ConfettiView`) and `LevelCompleteDialogFragment` on puzzle completion.
+- **Navigation & State Retention**:
+  - Single-Activity (`MainActivity`) + FragmentManager back stack (`HomeFragment` → `LevelSelectFragment` → `GameFragment` → `PauseDialogFragment`).
+  - System back button handling with an Exit confirmation dialog on `HomeFragment` and Pause menu on `GameFragment`.
+  - State survives configuration changes (screen rotation) via `GameViewModel` (`activityViewModels()`) and app restarts via `GamePreferences`.
 
 ---
 
-## 🏛️ Architectural Choices
+## 🏛️ Architecture
 
-The project adheres to **Clean Architecture** and **Unidirectional Data Flow (UDF)** principles:
+The app follows **MVVM** with **Unidirectional Data Flow (UDF)**:
 
-```
-┌────────────────────────────────────────────────────────┐
-│                        UI Layer                        │
-│   (Kotlin XML + ViewBinding + Fragments + Canvas Views)│
-└───────────────────────▲────────────────────────────────┘
-                        │ Observes StateFlow<GameUiState>
-                        │ Receives SharedFlow<GameUiEffect>
-┌───────────────────────┴────────────────────────────────┐
-│                     ViewModel                          │
-│                   GameViewModel                        │
-│  - Letter selection & backtracking gesture engine       │
-│  - Word validation & bonus word scoring               │
-│  - Audio & Haptic event triggers                       │
-│  - Navigation state & backstack hygiene                │
-└───────────────────────▲────────────────────────────────┘
-                        │
-┌───────────────────────┴────────────────────────────────┐
-│                     Data Layer                         │
-│  - LevelRepository: parses structured JSON level data   │
-│  - GamePreferences: persistent progress & settings     │
-│  - SoundEffects: synthesized low-latency audio engine  │
-└────────────────────────────────────────────────────────┘
-```
-
-### 1. Presentation & State Observation
-- Single source of truth: `StateFlow<GameUiState>` in `GameViewModel`.
-- Observed in Fragments via `viewLifecycleOwner.lifecycleScope.launch { repeatOnLifecycle(Lifecycle.State.STARTED) { ... } }`.
-- One-off transient events (such as tactile haptic pulses) are dispatched via `SharedFlow<GameUiEffect>`.
-
-### 2. State Retention & Lifecycle Hygiene
-- The ViewModel is scoped to `activityViewModels()`, guaranteeing retention across screen rotations and configuration changes.
-- System back button handling is cleanly managed via FragmentManager and `OnBackPressedCallback`:
-  - From `GameFragment`: opens the Pause modal or returns to `LevelSelectFragment`.
-  - From `LevelSelectFragment`: navigates back to `HomeFragment`.
-  - From `HomeFragment`: exits cleanly without orphaned dialogs or memory leaks.
+- **Data Layer**: `LevelRepository` (parses `assets/levels.json` and builds the 2D `CellData?` grid matrix) & `GamePreferences` (`SharedPreferences` persistence).
+- **ViewModel Layer**: `GameViewModel` exposes immutable `StateFlow<GameUiState>` for UI state and `SharedFlow<GameUiEffect>` for one-off haptic events.
+- **Audio Engine**: `SoundEffects` synthesizes pentatonic chimes, victory arpeggios, and error tones procedurally via Android `AudioTrack` (zero external audio assets).
+- **UI Layer**: `MainActivity`, `HomeFragment`, `LevelSelectFragment` (`RecyclerView` + `LevelAdapter`), `GameFragment`, custom Canvas views, and `DialogFragment`s.
 
 ---
 
-## 👆 Custom Swipe & Gesture Handling
+## 👆 Custom Swipe & Gesture Logic (`LetterWheelView`)
 
-The letter wheel is rendered on a custom `LetterWheelView` backed by `onTouchEvent`:
-
-1. **Radial Geometry**:
-   Letter positions are computed radially around the wheel center:
-   $$\theta_i = -\frac{\pi}{2} + i \cdot \frac{2\pi}{N}$$
-   $$(x_i, y_i) = (c_x + R \cos\theta_i, \; c_y + R \sin\theta_i)$$
-
-2. **Hit Testing & Tolerance**:
-   Each letter circle has an active hit radius ($r_{hit} \approx 38\text{dp}$) with hysteresis, preventing false un-touches during fast finger movement.
-
-3. **Dynamic Line Tracking**:
-   - For connected letters, static lines connect center-to-center with a 2-pass stroke (an outer translucent glow stroke and an inner vibrant golden stroke with `Paint.Cap.ROUND` and `Paint.Join.ROUND`).
-   - A dynamic rubber-band line tracks from the last selected letter directly to the player's active finger coordinate (`touchPoint`).
-
-4. **Backtracking Undo**:
-   If the player drags their finger back over the second-to-last selected letter, the gesture engine pops the last letter, allowing smooth corrections without having to lift the finger.
+1. **Radial Layout**: Letters are positioned evenly around the wheel center:
+   $$\theta_i = -\frac{\pi}{2} + i \cdot \frac{2\pi}{N}, \quad (x_i, y_i) = (c_x + R \cos\theta_i, \; c_y + R \sin\theta_i)$$
+2. **Hit Testing**: `onTouchEvent` checks Euclidean distance (`hypot`) from `(event.x, event.y)` to each letter center within a `36dp` hit radius.
+3. **Dynamic Line Tracking**: `onDraw` renders connected letter centers with a `Path` (outer glow + inner gold stroke) and extends the path to the active `touchPoint`.
+4. **Backtracking**: Dragging back onto `selectedIndices[size - 2]` pops the last selected letter without lifting the finger.
 
 ---
 
 ## 📊 Level Data Structure
 
-Levels are stored in `app/src/main/assets/levels.json` and parsed cleanly by `LevelRepository`:
+Levels live in `app/src/main/assets/levels.json`:
 
 ```json
 {
@@ -129,21 +75,14 @@ Levels are stored in `app/src/main/assets/levels.json` and parsed cleanly by `Le
 
 ---
 
-## 🛠️ Building & Running
+## 🛠️ Building & Testing
 
-### Requirements
-- Android SDK 36 / 35 / 34
-- JDK 17
-- Gradle 9.x (Gradle wrapper included)
+- **Playable APK**: [`WordCraft-v1.0.0.apk`](WordCraft-v1.0.0.apk) (6.4 MB)
 
-### Commands
 ```bash
 # Run unit tests
 ./gradlew test
 
-# Assemble Debug APK
+# Build debug APK
 ./gradlew assembleDebug
-
-# Output APK path:
-# app/build/outputs/apk/debug/app-debug.apk
 ```
